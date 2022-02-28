@@ -85,11 +85,12 @@ int main(int argc, char *argv[])
 
         memset(bufferRx, 0, BUFSIZErx);
         
+        printf("Reading tcp");
 
         readTextTCP(bufferRx, BUFSIZErx, newsockfd);
 
         long fileSize = check_File_Exists(bufferRx);
-        if (fileSize <=0)
+        if (fileSize == 0)
             printf("Requested file does not exist");
         
 
