@@ -16,11 +16,47 @@
 
 using namespace std;
 
+#define BUFSIZE 1000
+
+
 void receiveFile(string fileName, int socketfd);
 
 int main(int argc, char *argv[])
 {
-	// TO DO Your own code
+	 printf("Starting client...\n");
+
+     int sockfd, portno, n;
+     struct sockaddr_in serv_addr;
+     struct hostent *server;
+     char buffer[BUFSIZE];
+
+    if (argc < 3)
+	   error( "ERROR usage: ""hostname"",  ""port""");
+
+	portno = atoi(argv[2]);
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sockfd < 0) 
+	    error("ERROR opening socket");
+
+	server = gethostbyname(argv[1]);
+	if (server == NULL) 
+	    error("ERROR no such host");
+
+	printf("Server at: %s, port: %s\n",argv[1], argv[2]);
+
+
+    printf("Connect...\n");
+   
+    memset((char *) &serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+    serv_addr.sin_port = htons(portno);
+    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
+	    error("ERROR connecting");
+
+
+    receiveFile(argv[3], sockfd);
+    
 }
 
 /**
@@ -35,6 +71,31 @@ int main(int argc, char *argv[])
  */
 void receiveFile(string fileName, int sockfd)
 {
-	// TO DO Your own code
+    int n;
+    char buffer[BUFSIZE];
+
+    
+
+	printf("Requesting file %s", fileName.c_str());
+
+    n = write(sockfd, fileName.c_str(), sizeof(fileName));
+    if (n < 0)
+        error("ERROR writing to socket");
+    
+    memset(buffer, 0, BUFSIZE);
+
+    
+
+    for(;;)
+    {
+        read(sockfd, buffer, BUFSIZE);
+
+        ofstream wFile;
+        wFile.open(fileName, ios::out | ios::binary);
+        wFile.write( (char*)&buffer, sizeof(buffer));
+    }
+
+
+
 }
 
