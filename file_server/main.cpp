@@ -34,7 +34,9 @@ void sendFile(string fileName, long fileSize, int outToClient);
  */
 int main(int argc, char *argv[])
 {
-    printf("Starting server...\n");
+    std::cout << "Starting server...\n";
+
+    
 
     int sockfd, newsockfd, portno;
     char bufferRx[BUFSIZErx];
@@ -58,7 +60,7 @@ int main(int argc, char *argv[])
     if(sockfd < 0)
         error("ERROR opening socket");
 
-    printf(("Binding...\n"));
+    std::cout << "Binding...\n";
 
     memset((char *) &serv_addr, 0, sizeof(serv_addr));
     portno = atoi(argv[1]);
@@ -70,7 +72,8 @@ int main(int argc, char *argv[])
     if(bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
         error("ERROR on binding");
 
-    printf("Listen...\n");
+    std::cout << "Listen...\n";
+
     listen(sockfd, 5);
 
     clilen = sizeof(cli_addr);
@@ -81,20 +84,24 @@ int main(int argc, char *argv[])
         newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
         if (newsockfd < 0) error("ERROR on accept");
-		else printf("Accepted\n");
+		else std::cout << "Accepted\n";
+
 
         memset(bufferRx, 0, BUFSIZErx);
         
-        printf("Reading tcp");
+        std::cout << "Reading tcp...\n";
 
         readTextTCP(bufferRx, BUFSIZErx, newsockfd);
 
         long fileSize = check_File_Exists(bufferRx);
-        if (fileSize == 0)
-            printf("Requested file does not exist");
+        if (fileSize == 0.)
+        {
+            std::cout << "Requested file does not exist \n";
+            send(newsockfd, &fileSize, sizeof(fileSize), 0);
+        }
         
-
-        sendFile(bufferRx, fileSize, newsockfd);
+        else
+            sendFile(bufferRx, fileSize, newsockfd);
     }
 }
 
@@ -110,6 +117,13 @@ void sendFile(string fileName, long fileSize, int outToClient)
     long transStatus = 0;
     char fileBuf[BUFSIZE];
     int readStatus = 0;
+
+
+    
+    std::cout << "Client requested file " << fileName << ".." << std::endl;
+    std::cout << "Transmitting filesize to client\n";
+
+    send(outToClient, &fileSize, sizeof(fileSize), 0);
 
     FILE * file = fopen(fileName.c_str(), "rb");
 
