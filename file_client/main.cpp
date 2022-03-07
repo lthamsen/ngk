@@ -17,9 +17,9 @@
 using namespace std;
 
 #define BUFSIZE 1000
+#define BUFSIZErx 4096
 
-
-void receiveFile(string fileName, int socketfd);
+void receiveFile(string fileName, string fileDestination, int socketfd);
 
 int main(int argc, char *argv[])
 {
@@ -44,7 +44,6 @@ int main(int argc, char *argv[])
 
 	printf("Server at: %s, port: %s\n",argv[1], argv[2]);
 
-
     printf("Connect...\n");
    
     memset((char *) &serv_addr, 0, sizeof(serv_addr));
@@ -54,8 +53,7 @@ int main(int argc, char *argv[])
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
 	    error("ERROR connecting");
 
-
-    receiveFile(argv[3], sockfd);
+    receiveFile(argv[3], argv[4], sockfd);
     
 }
 
@@ -69,33 +67,56 @@ int main(int argc, char *argv[])
  * @param fileName Det fulde filnavn incl. evt. stinavn
  * @param sockfd Stream for at skrive til/læse fra serveren
  */
-void receiveFile(string fileName, int sockfd)
+void receiveFile(string fileName, string fileDestination, int sockfd)
 {
     int n;
     char buffer[BUFSIZE];
-
     
-
-	printf("Requesting file %s", fileName.c_str());
-
+    //Efterspørger filen fra serveren.
+	std::cout << "Requesting file" << fileName.c_str() << std::endl;
+ 
     n = write(sockfd, fileName.c_str(), sizeof(fileName));
     if (n < 0)
         error("ERROR writing to socket");
     
     memset(buffer, 0, BUFSIZE);
 
+    //Modtager filstørrelsen
+    std::cout << "Receiving filesize\n";
+
+    long fileSize;
+
+    recv(sockfd, &fileSize, sizeof(long), 0);
+
+    if(fileSize == 0.)
+        error("File does not exist");
     
+
+    std::cout << "File is " << fileSize << " bytes large.\n";
+
+    long transStatus = 0; 
+    int receiveSize = 0;
+    long perc = 0;
+    ofstream wFile;
+    wFile.open(fileDestination, ios::out | ios::binary);
 
     for(;;)
     {
-        read(sockfd, buffer, BUFSIZE);
+        receiveSize = recv(sockfd, buffer, sizeof(buffer), 0);
+        transStatus += receiveSize;
 
-        ofstream wFile;
-        wFile.open(fileName, ios::out | ios::binary);
-        wFile.write( (char*)&buffer, sizeof(buffer));
+        perc = transStatus/fileSize;
+
+        std::cout << "Received " << transStatus << " of " << fileSize << " bytes.";
+        std::cout << " (%" << perc << ")\n"; 
+
+        wFile.write( (char*)&buffer, receiveSize);
+
+        if(transStatus >= fileSize)
+        {
+            wFile.close();
+            break;
+        }
     }
-
-
-
 }
 

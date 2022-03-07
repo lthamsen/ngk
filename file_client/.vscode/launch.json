@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}/${fileBasenameNoExtension}.exe",
-            "args": [],
+            "args": ["10.0.0.1", "9000", "maar.jpg"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
